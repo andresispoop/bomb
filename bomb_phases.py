@@ -20,7 +20,7 @@ import sys
 # the LCD display GUI
 class Lcd(Frame):
     def __init__(self, window):
-        super().__init__(window, bg="black")
+        super().__init__(window, bg="red")
         # make the GUI fullscreen
         window.after(100, window.attributes, "-fullscreen", True)
         # we need to know about the timer (7-segment display) to be able to pause/unpause it
@@ -37,36 +37,36 @@ class Lcd(Frame):
         self.columnconfigure(1, weight=2)
         self.columnconfigure(2, weight=1)
         # the scrolling informative "boot" text
-        self._lscroll = Label(self, bg="black", fg="white", font=("Courier New", 14), text="", justify=LEFT)
+        self._lscroll = Label(self, bg="red", fg="black", font=("Courier New", 14), text="", justify=LEFT)
         self._lscroll.grid(row=0, column=0, columnspan=3, sticky=W)
         self.pack(fill=BOTH, expand=True)
 
     # sets up the LCD GUI
     def setup(self):
         # the timer
-        self._ltimer = Label(self, bg="black", fg="#00ff00", font=("Courier New", 18), text="Time left: ")
+        self._ltimer = Label(self, bg="red", fg="#000000", font=("Courier New", 18), text="Time left: ")
         self._ltimer.grid(row=1, column=0, columnspan=3, sticky=W)
         # the keypad passphrase
-        self._lkeypad = Label(self, bg="black", fg="#00ff00", font=("Courier New", 18), text="Keypad phase: ")
+        self._lkeypad = Label(self, bg="red", fg="#000000", font=("Courier New", 18), text="Keypad phase: ")
         self._lkeypad.grid(row=2, column=0, columnspan=3, sticky=W)
         # the jumper wires status
-        self._lwires = Label(self, bg="black", fg="#00ff00", font=("Courier New", 18), text="Wires phase: ")
+        self._lwires = Label(self, bg="red", fg="#000000", font=("Courier New", 18), text="Wires phase: ")
         self._lwires.grid(row=3, column=0, columnspan=3, sticky=W)
         # the pushbutton status
-        self._lbutton = Label(self, bg="black", fg="#00ff00", font=("Courier New", 18), text="Button phase: ")
+        self._lbutton = Label(self, bg="red", fg="#000000", font=("Courier New", 18), text="Button phase: ")
         self._lbutton.grid(row=4, column=0, columnspan=3, sticky=W)
         # the toggle switches status
-        self._ltoggles = Label(self, bg="black", fg="#00ff00", font=("Courier New", 18), text="Toggles phase: ")
+        self._ltoggles = Label(self, bg="red", fg="#000000", font=("Courier New", 18), text="Toggles phase: ")
         self._ltoggles.grid(row=5, column=0, columnspan=2, sticky=W)
         # the strikes left
-        self._lstrikes = Label(self, bg="black", fg="#00ff00", font=("Courier New", 18), text="Strikes left: ")
+        self._lstrikes = Label(self, bg="red", fg="#000000", font=("Courier New", 18), text="Strikes left: ")
         self._lstrikes.grid(row=5, column=2, sticky=W)
         if (SHOW_BUTTONS):
             # the pause button (pauses the timer)
-            self._bpause = tkinter.Button(self, bg="red", fg="white", font=("Courier New", 18), text="Pause", anchor=CENTER, command=self.pause)
+            self._bpause = tkinter.Button(self, bg="red", fg="black", font=("Courier New", 18), text="Pause", anchor=CENTER, command=self.pause)
             self._bpause.grid(row=6, column=0, pady=40)
             # the quit button
-            self._bquit = tkinter.Button(self, bg="red", fg="white", font=("Courier New", 18), text="Quit", anchor=CENTER, command=self.quit)
+            self._bquit = tkinter.Button(self, bg="red", fg="black", font=("Courier New", 18), text="Quit", anchor=CENTER, command=self.quit)
             self._bquit.grid(row=6, column=2, pady=40)
 
     # lets us pause/unpause the timer (7-segment display)
@@ -98,10 +98,10 @@ class Lcd(Frame):
 
         # reconfigure the GUI
         # the retry button
-        self._bretry = tkinter.Button(self, bg="red", fg="white", font=("Courier New", 18), text="Retry", anchor=CENTER, command=self.retry)
+        self._bretry = tkinter.Button(self, bg="black", fg="white", font=("Courier New", 18), text="Retry", anchor=CENTER, command=self.retry)
         self._bretry.grid(row=1, column=0, pady=40)
         # the quit button
-        self._bquit = tkinter.Button(self, bg="red", fg="white", font=("Courier New", 18), text="Quit", anchor=CENTER, command=self.quit)
+        self._bquit = tkinter.Button(self, bg="black", fg="white", font=("Courier New", 18), text="Quit", anchor=CENTER, command=self.quit)
         self._bquit.grid(row=1, column=2, pady=40)
 
     # re-attempts the bomb (after an explosion or a successful defusion)
@@ -186,7 +186,62 @@ class Timer(PhaseThread):
     # returns the timer as a string (mm:ss)
     def __str__(self):
         return f"{self._min}:{self._sec}"
+    
+class NumericPhase(PhaseThread):
+    def __init__(self, name, component=None, target=None, display_length=0):
+        super().__init__(name, component, target)
+        # the default value is the current state of the component
+        self._value = self._get_int_state()
+        # we need to know the previous state to detect state change
+        self._prev_value = self._value
+        # we need to know the display length (character width) of the pin states (for the GUI)
+        self._display_length = display_length
 
+    # runs the thread
+    def run(self):
+        self._running = True
+        while (self._running):
+            # get the component value
+            self._value = self._get_int_state()
+            # the component value is correct -> phase defused
+            if (self._value == self._target):
+                self._defused = True
+            # the component state has changed
+            elif (self._value != self._prev_value):
+                # one or more component states are incorrect -> phase failed (strike)
+                if (not self._check_state()):
+                    self._failed = True
+                # note the updated state
+                self._prev_value = self._value
+            sleep(0.1)
+
+    # checks the component for an incorrect state (only internally called)
+    def _check_state(self):
+        # get a list (True/False) of the current, previous, and valid (target) component states
+        states = self._get_bool_state()
+        prev_states = [ bool(int(c)) for c in bin(self._prev_value)[2:].zfill(self._display_length) ]
+        valid_states = [ bool(int(c)) for c in bin(self._target)[2:].zfill(self._display_length) ]
+        # go through each component state
+        for i in range(len(states)):
+            # a component state has changed *and* it is in an invalid state -> phase failed (strike)
+            if (states[i] != prev_states[i] and states[i] != valid_states[i]):
+                return False
+        return True
+
+    # returns the state of the component as a list (True/False)
+    def _get_bool_state(self):
+        return [ pin.value for pin in self._component ]
+
+    # returns the state of the component as an integer
+    def _get_int_state(self):
+        return int("".join([ str(int(n)) for n in self._get_bool_state() ]), 2)
+
+    # returns the state of the component as a string
+    def __str__(self):
+        if (self._defused):
+            return "DEFUSED"
+        else:
+            return f"{bin(self._value)[2:].zfill(self._display_length)}/{self._value}"
 # the keypad phase
 class Keypad(PhaseThread):
     def __init__(self, component, target, name="Keypad"):
@@ -226,22 +281,16 @@ class Keypad(PhaseThread):
             return self._value
 
 # the jumper wires phase
-class Wires(PhaseThread):
-    def __init__(self, component, target, name="Wires"):
-        super().__init__(name, component, target)
-
-    # runs the thread
-    def run(self):
-        # TODO
-        pass
+class Wires(NumericPhase):
+    def __init__(self, component, target, display_length, name="Wires"):
+        super().__init__(name, component, target, display_length)
 
     # returns the jumper wires state as a string
     def __str__(self):
         if (self._defused):
             return "DEFUSED"
         else:
-            # TODO
-            pass
+            return "".join([ chr(int(i)+65) if pin.value else "." for i, pin in enumerate(self._component) ])
 
 # the pushbutton phase
 class Button(PhaseThread):
@@ -295,19 +344,63 @@ class Button(PhaseThread):
             return str("Pressed" if self._value else "Released")
 
 # the toggle switches phase
-class Toggles(PhaseThread):
-    def __init__(self, component, target, name="Toggles"):
+class Toggles(NumericPhase):
+    def __init__(self, component, target, display_length, name="Toggles"):
+        super().__init__(name, component, target, display_length)
+'''
+class NumericPhase(PhaseThread):
+    def __init__(self, name, component=None, target=None, display_length=0):
         super().__init__(name, component, target)
+        # the default value is the current state of the component
+        self._value = self._get_int_state()
+        # we need to know the previous state to detect state change
+        self._prev_value = self._value
+        # we need to know the display length (character width) of the pin states (for the GUI)
+        self._display_length = display_length
 
     # runs the thread
     def run(self):
-        # TODO
-        pass
+        self._running = True
+        while (self._running):
+            # get the component value
+            self._value = self._get_int_state()
+            # the component value is correct -> phase defused
+            if (self._value == self._target):
+                self._defused = True
+            # the component state has changed
+            elif (self._value != self._prev_value):
+                # one or more component states are incorrect -> phase failed (strike)
+                if (not self._check_state()):
+                    self._failed = True
+                # note the updated state
+                self._prev_value = self._value
+            sleep(0.1)
 
-    # returns the toggle switches state as a string
+    # checks the component for an incorrect state (only internally called)
+    def _check_state(self):
+        # get a list (True/False) of the current, previous, and valid (target) component states
+        states = self._get_bool_state()
+        prev_states = [ bool(int(c)) for c in bin(self._prev_value)[2:].zfill(self._display_length) ]
+        valid_states = [ bool(int(c)) for c in bin(self._target)[2:].zfill(self._display_length) ]
+        # go through each component state
+        for i in range(len(states)):
+            # a component state has changed *and* it is in an invalid state -> phase failed (strike)
+            if (states[i] != prev_states[i] and states[i] != valid_states[i]):
+                return False
+        return True
+
+    # returns the state of the component as a list (True/False)
+    def _get_bool_state(self):
+        return [ pin.value for pin in self._component ]
+
+    # returns the state of the component as an integer
+    def _get_int_state(self):
+        return int("".join([ str(int(n)) for n in self._get_bool_state() ]), 2)
+
+    # returns the state of the component as a string
     def __str__(self):
         if (self._defused):
             return "DEFUSED"
         else:
-            # TODO
-            pass
+            return f"{bin(self._value)[2:].zfill(self._display_length)}/{self._value}"
+            '''

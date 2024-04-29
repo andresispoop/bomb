@@ -7,7 +7,7 @@
 # constants
 DEBUG = False        # debug mode?
 RPi = True           # is this running on the RPi?
-ANIMATE = True       # animate the LCD text?
+ANIMATE = False       # animate the LCD text?
 SHOW_BUTTONS = False # show the Pause and Quit buttons on the main LCD GUI?
 COUNTDOWN = 300      # the initial bomb countdown value (seconds)
 NUM_STRIKES = 5      # the total strikes allowed before the bomb "explodes"
@@ -147,22 +147,22 @@ def genKeypadCombination():
         return combination
 
     # the list of keywords and matching passphrases
-    keywords = { "BANDIT": "RIVER",\
-                 "BUCKLE": "FADED",\
-                 "CANOPY": "FOXES",\
-                 "DEBATE": "THROW",\
-                 "FIERCE": "TRICK",\
-                 "GIFTED": "CYCLE",\
-                 "IMPACT": "STOLE",\
-                 "LONELY": "TOADY",\
-                 "MIGHTY": "ALOOF",\
-                 "NATURE": "CARVE",\
-                 "REBORN": "CLIMB",\
-                 "RECALL": "FEIGN",\
-                 "SYSTEM": "LEAVE",\
-                 "TAKING": "SPINY",\
-                 "WIDELY": "BOUND",\
-                 "ZAGGED": "YACHT" }
+    keywords = { "AUSTIN": "POVERTY",\
+                 "BOATHOUSE": "COMMUNITY",\
+                 "CHAPEL": "RELIGION",\
+                 "FERMAN": "ARTS",\
+                 "GRAND": "CENTER",\
+                 "HEALTH": "SCIENCE",\
+                 "INNOVATIVE": "STARBUCKS",\
+                 "JENKINS": "BATHROOMS",\
+                 "KENNEDY": "BOULEVARD",\
+                 "MINARET": "CLIMB",\
+                 "PLANT": "HALL",\
+                 "RIVER": "WALK",\
+                 "SKYES": "BUSSINESS",\
+                 "TECH": "COMPSCI",\
+                 "ULTIMATE": "DINING",\
+                 "VAUGHN": "CENTER" }
     # the rotation cipher key
     rot = randint(1, 25)
 
@@ -196,11 +196,17 @@ button_color = choice(["R", "G", "B"])
 # appropriately set the target (R is None)
 button_target = None
 # G is the first numeric digit in the serial number
-if (button_color == "G"):
-    button_target = [ n for n in serial if n.isdigit() ][0]
+if (button_color == "R"):
+    button_target = [ n for n in serial if n.isdigit() ][1]
+    
 # B is the last numeric digit in the serial number
 elif (button_color == "B"):
     button_target = [ n for n in serial if n.isdigit() ][-1]
+    
+
+else:
+    button_target = [ n for n in serial if n.isdigit() ][0]
+    
 
 if (DEBUG):
     print(f"Serial number: {serial}")
