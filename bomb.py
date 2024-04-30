@@ -136,12 +136,16 @@ def check_phases():
         # turn off the bomb and render the conclusion GUI
         turn_off()
         gui.after(1000, gui.conclusion, False)
+        
         # stop checking phases
         return
 
     # the bomb has been successfully defused!
     if (active_phases == 0):
         # turn off the bomb and render the conclusion GUI
+        pygame.init()
+        pygame.mixer.music.load(WIN)
+        pygame.mixer.music.play(1)
         turn_off()
         gui.after(100, gui.conclusion, True)
         # stop checking phases
@@ -156,6 +160,15 @@ def strike():
     
     # note the strike
     strikes_left -= 1
+    if (strikes_left >= 1):
+        pygame.init()
+        pygame.mixer.music.load(STRIKE)
+        pygame.mixer.music.play(1)
+    else:
+        pygame.init()
+        pygame.mixer.music.load(EXPLODE)
+        pygame.mixer.music.play(1)
+
 
 # turns off the bomb
 def turn_off():
@@ -172,7 +185,7 @@ def turn_off():
     # turn off the pushbutton's LED
     for pin in button._rgb:
         pin.value = True
-
+    
 ######
 # MAIN
 ######

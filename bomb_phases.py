@@ -10,6 +10,7 @@ from bomb_configs import *
 from tkinter import *
 import tkinter
 from threading import Thread
+import pygame
 from time import sleep
 import os
 import sys
@@ -84,6 +85,7 @@ class Lcd(Frame):
 
     # setup the conclusion GUI (explosion/defusion)
     def conclusion(self, success=False):
+        global strikes_left
         # destroy/clear widgets that are no longer needed
         self._lscroll["text"] = ""
         self._ltimer.destroy()
@@ -98,6 +100,18 @@ class Lcd(Frame):
 
         # reconfigure the GUI
         # the retry button
+        if (success):
+            image = PhotoImage(file="./approved.png")
+            self._lsuccess = Label(self, bg="red", fg="#000000", font=("Courier New", 18), text="YOU SUCCESSFULLY DEFUSED THE BOMB!!!\nYOU SAVED THE UNIVERSITY OF TAMPA!!!\n YOU WILL NOW RECIEVE A FULL SCHOLARSHIP!!! ")
+            self._lsuccess.grid(row=2, column=0, columnspan=3, sticky=W,ipadx=50)
+        else:
+            image = PhotoImage(file="./rejected.png")
+            self._lfail = Label(self, bg="red", fg="#000000", font=("Courier New", 18), text="YOU BLEW UP THE BOMB!!!\nTHE UNIVERSITY OF TAMPA EXPLODED!!!\nYOU ARE REJECTED FROM THE UNIVERSITY FOREVER!!! ")
+            self._lfail.grid(row=2, column=0, columnspan=3, sticky=W, ipadx=50)
+            
+        self._lscroll["image"] = image
+        self._lscroll.image = image
+        self._lscroll.grid(row=0,column=0,columnspan=3,sticky=EW,)
         self._bretry = tkinter.Button(self, bg="black", fg="white", font=("Courier New", 18), text="Retry", anchor=CENTER, command=self.retry)
         self._bretry.grid(row=1, column=0, pady=40)
         # the quit button
@@ -239,6 +253,9 @@ class NumericPhase(PhaseThread):
     # returns the state of the component as a string
     def __str__(self):
         if (self._defused):
+            pygame.init()
+            pygame.mixer.music.load(DEFUSED)
+            pygame.mixer.music.play(1)
             return "DEFUSED"
         else:
             return f"{bin(self._value)[2:].zfill(self._display_length)}/{self._value}"
@@ -276,7 +293,11 @@ class Keypad(PhaseThread):
     # returns the keypad combination as a string
     def __str__(self):
         if (self._defused):
+            pygame.init()
+            pygame.mixer.music.load(DEFUSED)
+            pygame.mixer.music.play(1)
             return "DEFUSED"
+            
         else:
             return self._value
 
@@ -288,6 +309,9 @@ class Wires(NumericPhase):
     # returns the jumper wires state as a string
     def __str__(self):
         if (self._defused):
+            pygame.init()
+            pygame.mixer.music.load(DEFUSED)
+            pygame.mixer.music.play(1)
             return "DEFUSED"
         else:
             return "".join([ chr(int(i)+65) if pin.value else "." for i, pin in enumerate(self._component) ])
@@ -339,6 +363,9 @@ class Button(PhaseThread):
     # returns the pushbutton's state as a string
     def __str__(self):
         if (self._defused):
+            pygame.init()
+            pygame.mixer.music.load(DEFUSED)
+            pygame.mixer.music.play(1)
             return "DEFUSED"
         else:
             return str("Pressed" if self._value else "Released")
@@ -347,60 +374,3 @@ class Button(PhaseThread):
 class Toggles(NumericPhase):
     def __init__(self, component, target, display_length, name="Toggles"):
         super().__init__(name, component, target, display_length)
-'''
-class NumericPhase(PhaseThread):
-    def __init__(self, name, component=None, target=None, display_length=0):
-        super().__init__(name, component, target)
-        # the default value is the current state of the component
-        self._value = self._get_int_state()
-        # we need to know the previous state to detect state change
-        self._prev_value = self._value
-        # we need to know the display length (character width) of the pin states (for the GUI)
-        self._display_length = display_length
-
-    # runs the thread
-    def run(self):
-        self._running = True
-        while (self._running):
-            # get the component value
-            self._value = self._get_int_state()
-            # the component value is correct -> phase defused
-            if (self._value == self._target):
-                self._defused = True
-            # the component state has changed
-            elif (self._value != self._prev_value):
-                # one or more component states are incorrect -> phase failed (strike)
-                if (not self._check_state()):
-                    self._failed = True
-                # note the updated state
-                self._prev_value = self._value
-            sleep(0.1)
-
-    # checks the component for an incorrect state (only internally called)
-    def _check_state(self):
-        # get a list (True/False) of the current, previous, and valid (target) component states
-        states = self._get_bool_state()
-        prev_states = [ bool(int(c)) for c in bin(self._prev_value)[2:].zfill(self._display_length) ]
-        valid_states = [ bool(int(c)) for c in bin(self._target)[2:].zfill(self._display_length) ]
-        # go through each component state
-        for i in range(len(states)):
-            # a component state has changed *and* it is in an invalid state -> phase failed (strike)
-            if (states[i] != prev_states[i] and states[i] != valid_states[i]):
-                return False
-        return True
-
-    # returns the state of the component as a list (True/False)
-    def _get_bool_state(self):
-        return [ pin.value for pin in self._component ]
-
-    # returns the state of the component as an integer
-    def _get_int_state(self):
-        return int("".join([ str(int(n)) for n in self._get_bool_state() ]), 2)
-
-    # returns the state of the component as a string
-    def __str__(self):
-        if (self._defused):
-            return "DEFUSED"
-        else:
-            return f"{bin(self._value)[2:].zfill(self._display_length)}/{self._value}"
-            '''

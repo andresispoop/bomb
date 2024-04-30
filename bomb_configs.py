@@ -7,11 +7,16 @@
 # constants
 DEBUG = False        # debug mode?
 RPi = True           # is this running on the RPi?
-ANIMATE = False       # animate the LCD text?
+ANIMATE = True       # animate the LCD text?
 SHOW_BUTTONS = False # show the Pause and Quit buttons on the main LCD GUI?
 COUNTDOWN = 300      # the initial bomb countdown value (seconds)
 NUM_STRIKES = 5      # the total strikes allowed before the bomb "explodes"
 NUM_PHASES = 4       # the total number of initial active bomb phases
+
+DEFUSED = "./success.mp3"
+STRIKE = "./strike.mp3"
+EXPLODE = "./explode.mp3"
+WIN = "./win.mp3"
 
 # imports
 from random import randint, shuffle, choice
@@ -159,10 +164,10 @@ def genKeypadCombination():
                  "MINARET": "CLIMB",\
                  "PLANT": "HALL",\
                  "RIVER": "WALK",\
-                 "SKYES": "BUSSINESS",\
+                 "SKYES": "BUSINESS",\
                  "TECH": "COMPSCI",\
                  "ULTIMATE": "DINING",\
-                 "VAUGHN": "CENTER" }
+                 "VAUGHN": "FOOD" }
     # the rotation cipher key
     rot = randint(1, 25)
 
@@ -198,15 +203,15 @@ button_target = None
 # G is the first numeric digit in the serial number
 if (button_color == "R"):
     button_target = [ n for n in serial if n.isdigit() ][1]
-    
+    wires_target = 1
 # B is the last numeric digit in the serial number
 elif (button_color == "B"):
     button_target = [ n for n in serial if n.isdigit() ][-1]
-    
+    wires_target = 10
 
 else:
     button_target = [ n for n in serial if n.isdigit() ][0]
-    
+    wires_target = 28
 
 if (DEBUG):
     print(f"Serial number: {serial}")
@@ -217,8 +222,9 @@ if (DEBUG):
 
 # set the bomb's LCD bootup text
 boot_text = f"Booting...\n\x00\x00"\
-            f"*Kernel v3.1.4-159 loaded.\n"\
-            f"Initializing subsystems...\n\x00"\
+            f"This bomb will blow up The University of Tampa\n"\
+            f"Defuse the bomb for a chance to receive a full scholarship\n"\
+            f"Blow the bomb up and get rejected immediately\n"\
             f"*System model: 102BOMBv4.2\n"\
             f"*Serial number: {serial}\n"\
             f"Encrypting keypad...\n\x00"\
